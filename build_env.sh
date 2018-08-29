@@ -8,7 +8,7 @@
 
 PWD=`pwd`
 build_dir="ffmpeg"
-ffmpeg_version="n4.0.2"
+ffmpeg_version="n3.4.4"
 build_out="out"
 
 
@@ -25,21 +25,27 @@ function ffmpeg_prepare()
 	fi
 	echo "Download FFmpeg ..."
 
-	#wget -P $build_dir https://github.com/FFmpeg/FFmpeg/archive/${ffmpeg_version}.tar.gz
+	if [ -f ${PWD}/${build_dir}/${ffmpeg_version}.tar.gz ]; then
+		return 3
+	fi
+
+	wget -P $build_dir https://github.com/FFmpeg/FFmpeg/archive/${ffmpeg_version}.tar.gz
 
 	tar zxvf $build_dir/${ffmpeg_version}.tar.gz -C $build_dir
 }
 
 function ffmpeg_build()
 {
+	local root_pwd=$PWD
 	cd ./${build_dir}/FFmpeg-${ffmpeg_version}
 	echo "Currect dir $PWD"
 
-	if [ -d ${PWD}/${build_dir}/${build_out} ]; then
+	if [ -d ${root_pwd}/${build_dir}/${build_out} ]; then
 		return 4
 	fi
 
-    ./configure --enable-shared  --prefix=${PWD}/${build_dir}/${build_out}
+	./configure --enable-shared  --prefix=${root_pwd}/${build_dir}/${build_out}
+	echo "./configure --enable-shared  --prefix=${root_pwd}/${build_dir}/${build_out}"
 	make
 	make install
 
@@ -51,6 +57,10 @@ function ffmpeg_build()
 #local_env_prepare
 
 ffmpeg_prepare
+if [ $? == 3 ]; then
+	echo "FFmpeg Installation package [${ffmpeg_version}.tar.gz] already exists"
+	exit 1
+fi
 
 ffmpeg_build
 if [ $? == 4 ]; then
